@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezaaa To-Do-List App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1C1C1C; /* Dark background */
+            color: #F5F5F5; /* Light text */
+        }
+        h1 {
+            text-align: center;
+            color: #FFD700; /* Golden text for title */
+        }
+        #todo-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #todo-input {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #444; /* Darker border */
+            border-radius: 4px 0 0 4px;
+            background-color: #333; /* Dark input background */
+            color: #F5F5F5; /* Light text */
+        }
+        #add-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #444; /* Dark button background */
+            color: #FFD700; /* Golden text */
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        #todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #333; /* Dark item background */
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); /* Light shadow */
+        }
+        .todo-item span {
+            color: #FFD700; /* Golden text */
+            flex-grow: 1;
+        }
+        .todo-item button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .edit-button {
+            background-color: #555; /* Darker edit button */
+            color: #FFD700; /* Golden text */
+            border: none;
+            border-radius: 4px;
+        }
+        .delete-button {
+            background-color: #800000; /* Dark red delete button */
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .edit-input {
+            flex-grow: 1;
+            padding: 5px;
+            font-size: 14px;
+            border: 1px solid #444; /* Darker input border */
+            background-color: #333; /* Dark input background */
+            color: #F5F5F5; /* Light text */
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rezaaa To-Do-List</h1>
+    <form id="todo-form">
+        <input type="text" id="todo-input" placeholder="Add a new task..." required>
+        <button type="submit" id="add-button">Add</button>
+    </form>
+    <ul id="todo-list"></ul>
+
+    <script>
+        const form = document.getElementById('todo-form');
+        const input = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+        let todos = JSON.parse(localStorage.getItem('todos')) || []; // Load todos from localStorage
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            addTodo();
+        });
+
+        function addTodo() {
+            const todoText = input.value.trim();
+            if (todoText) {
+                const todo = {
+                    id: Date.now(),
+                    text: todoText,
+                    completed: false
+                };
+                todos.push(todo);
+                localStorage.setItem('todos', JSON.stringify(todos)); // Save todos to localStorage
+                renderTodo(todo);
+                input.value = '';
+            }
+        }
+
+        function renderTodo(todo) {
+            const li = document.createElement('li');
+            li.setAttribute('class', 'todo-item');
+            li.setAttribute('data-id', todo.id);
+            li.innerHTML = `
+                <span>${todo.text}</span>
+                <div>
+                    <button class="edit-button">Edit</button>
+                    <button class="delete-button">Delete</button>
+                </div>
+            `;
+            todoList.appendChild(li);
+
+            li.querySelector('.edit-button').addEventListener('click', () => editTodo(todo.id));
+            li.querySelector('.delete-button').addEventListener('click', () => deleteTodo(todo.id));
+        }
+
+        function editTodo(id) {
+            const todoItem = document.querySelector(`[data-id="${id}"]`);
+            const todoText = todoItem.querySelector('span').textContent;
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.value = todoText;
+            editInput.classList.add('edit-input');
+            
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save';
+            saveButton.classList.add('edit-button');
+            
+            todoItem.innerHTML = '';
+            todoItem.appendChild(editInput);
+            todoItem.appendChild(saveButton);
+            
+            editInput.focus();
+            
+            saveButton.addEventListener('click', function() {
+                const newText = editInput.value.trim();
+                if (newText) {
+                    todos = todos.map(todo => todo.id === id ? {...todo, text: newText} : todo);
+                    localStorage.setItem('todos', JSON.stringify(todos)); // Update localStorage
+                    todoItem.innerHTML = `
+                        <span>${newText}</span>
+                        <div>
+                            <button class="edit-button">Edit</button>
+                            <button class="delete-button">Delete</button>
+                        </div>
+                    `;
+                    todoItem.querySelector('.edit-button').addEventListener('click', () => editTodo(id));
+                    todoItem.querySelector('.delete-button').addEventListener('click', () => deleteTodo(id));
+                }
+            });
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(todo => todo.id !== id);
+            localStorage.setItem('todos', JSON.stringify(todos)); // Update localStorage
+            document.querySelector(`[data-id="${id}"]`).remove();
+        }
+
+        // Initial render of todos from localStorage
+        todos.forEach(todo => renderTodo(todo));
+    </script>
+</body>
+</html>
